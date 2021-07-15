@@ -66,45 +66,34 @@ system.time(
     
 
   })
-power_est = NULL ##!!!!!!!!! Fix here... loop index does not work for group_by or summarize
-for (this.effect.i in c('b1', 'b2', 'b3')) {
+rm (power_est)
   power_est2 = results %>%
-    group_by(n, assign(this.effect.i))%>%
-    summarize(power = sum(assign(this.effect.i) < .05)/n())
-  power_est2$main.effect = this.effect.i
+    group_by(n, b1)%>%
+    summarize(power = mean(sum(b1_p < .05)/n()))
+    power_est2$main.effect = 'b1'
+    colnames(power_est2)[colnames(power_est2) == 'b1'] = 'Effect.Size'
+    power_est = power_est2
+
+  power_est2 = results %>%
+    group_by(n, b2)%>%
+    summarize(power = sum(b2_p < .05)/n())
+  power_est2$main.effect = 'b2'
+  colnames(power_est2)[colnames(power_est2) == 'b2'] = 'Effect.Size'
+  power_est = rbind(power_est, power_est2)
+  
+  power_est2 = results %>%
+    group_by(n, b3)%>%
+    summarize(power = sum(b3_p < .05)/n())
+  power_est2$main.effect = 'b3'
+  colnames(power_est2)[colnames(power_est2) == 'b3'] = 'Effect.Size'
   power_est = rbind(power_est, power_est2)
 
-}
-power_ests2 = results %>%
-  group_by(n, b3)%>%
-  summarize(power = sum(b3_p < .05)/n())
-
-power_ests2$b3 = factor(power_ests2$b3)
-# Get power and n then plot: $$ Need to make a main.effect column, n, power
-power_est = pivot_longer(results[6:13],
-                         cols = b1:b3, 
-                         names_to = 'main.effect.size',
-                         values_to = 'effect.size')
-
-power_est = pivot_longer(power_est, 
-                         cols = b1_p:b3_p,
-                         names_to = 'main.effect.p',
-                         values_to = 'p.value')
-power_est = power_est[!duplicated(power_est$p.value),]
+  power_est$main.effect = factor(power_est$main.effect)
+  power_est$Effect.Size = factor(power_est$Effect.Size)
 
 
-power_ests2 = power_est %>%
-  group_by(n, b3)%>%
-  summarize(power = sum(b3_p < .05)/n())
 
-
-power_ests2long = gather(power_ests2, main_effect, b1:b3, factor_key = TRUE)
-
-power_ests2$b1 = factor(power_ests2$b1)
-power_ests2$b2 = factor(power_ests2$b2)
-power_ests2$b3 = factor(power_ests2$b3)
-
-ggplot(power_ests2, aes(x=n, y=power, group = b3, color= b3))+
+ggplot(power_est[power_est[,4] == 'b1',], aes(x=n, y=power, group = Effect.Size, color= Effect.Size))+
   geom_point(size = 3.5)+
   geom_line(size = 1.3)+
   # stat_smooth(method = 'loess',  se = TRUE, aes(fill = b3), alpha = 0.3)+
