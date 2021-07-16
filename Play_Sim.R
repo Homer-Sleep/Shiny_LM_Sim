@@ -92,8 +92,11 @@ rm (power_est)
   power_est$Effect.Size = factor(power_est$Effect.Size)
 
 
+main_effects = c("b1", "b2", "b3")
+for (main_effects_i in main_effects){
 
-ggplot(power_est[power_est[,4] == 'b1',], aes(x=n, y=power, group = Effect.Size, color= Effect.Size))+
+  
+print(ggplot(filter(power_est, main.effect == main_effects_i), aes(x=n, y=power, group = Effect.Size, color= Effect.Size))+
   geom_point(size = 3.5)+
   geom_line(size = 1.3)+
   # stat_smooth(method = 'loess',  se = TRUE, aes(fill = b3), alpha = 0.3)+
@@ -103,6 +106,7 @@ ggplot(power_est[power_est[,4] == 'b1',], aes(x=n, y=power, group = Effect.Size,
   xlab("Sample Size (N)")+ ylab("Estimated Power")+
   # theme_classic()+
   #coord_cartesian(ylim=c(-2, .5))+
-  plot_finish
+  plot_finish)
+}
 
 
