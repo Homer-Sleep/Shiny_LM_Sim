@@ -11,13 +11,13 @@ library(tidyverse)
 
 # simulation function:
 regression_sim = function(simNum, n, b0, b1, b2, b3, x1mean=0, x1_sd=1, err_mean=0, err_sd=1){
-  x1 = rnorm(n, mean = x1_sd)
+  x1 = rnorm(n, mean = x1mean, sd = x1_sd)
   x2 = sample(0:1, n, replace = TRUE)
   
   y = b0 + (b1* x1) + (b2 * x2) + (b3 * x1 * x2) + rnorm(n, mean = err_mean, sd = err_sd)
   
   model = lm(y~ x1 * x2)
-  summary(model)
+  # summary(model)
   #Pull info
   output = summary(model)$coefficients
   coefs = output[,1]
@@ -47,7 +47,7 @@ plot_finish = theme(plot.title = element_text(color= 'black',face='bold',size=18
     axis.ticks = element_line(size = .8))
 
 # prep for parallel processing:
-ncpus = detectCores()  # number of cores to use, use -1 if you want to still use the PC for other things
+ncpus = (detectCores())-1  # number of cores to use, use -1 if you want to still use the PC for other things
 cl = makeCluster(ncpus, type = 'SOCK')
 registerDoSNOW(cl)
 
@@ -57,7 +57,7 @@ results = NULL
 num_sims = 1000
 system.time(
   for(row in 1:nrow(grid_input)){
-    sims = ldply(1:num_sims, regression_sim, n=grid_input[row, 'n'], b0=0, b1 = .3, b2=.2, b3 = grid_input[row,'b3'], .parallel = TRUE)
+    sims = ldply(1:num_sims, regression_sim, n=grid_input[row, 'n'], b0=0, b1 =  grid_input[row,'b1'], b2= grid_input[row,'b2'], b3 = grid_input[row,'b3'], .parallel = TRUE)
     sims$n = grid_input[row, 'n']
     sims$b1 = grid_input[row, 'b1']
     sims$b2 = grid_input[row, 'b2']
@@ -102,7 +102,7 @@ print(ggplot(filter(power_est, main.effect == main_effects_i), aes(x=n, y=power,
   # stat_smooth(method = 'loess',  se = TRUE, aes(fill = b3), alpha = 0.3)+
   ylim(c(0,1))+
   geom_hline(yintercept =  .8, size = 1)+
-  labs(title = paste("Estimated Power by N"))+
+  labs(title = paste("Estimated Power by N for", main_effects_i))+
   xlab("Sample Size (N)")+ ylab("Estimated Power")+
   # theme_classic()+
   #coord_cartesian(ylim=c(-2, .5))+
